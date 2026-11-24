@@ -1,0 +1,166 @@
+@import '@fontsource-variable/inter';
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg: 9 9 11;
+  --surface: 20 20 23;
+  --raised: 30 30 34;
+  --line: 255 255 255;
+  --ink: 244 244 245;
+  --sub: 161 161 170;
+  --mute: 113 113 122;
+  --good: 74 222 128;
+  --warn: 251 191 36;
+  --bad: 248 113 113;
+  --accent: 200 240 74;
+  --onaccent: 12 14 6;
+  --line-a: 0.07;
+  color-scheme: dark;
+}
+
+:root[data-theme='claro'] {
+  --bg: 246 246 247;
+  --surface: 255 255 255;
+  --raised: 238 238 240;
+  --line: 0 0 0;
+  --ink: 17 17 19;
+  --sub: 82 82 91;
+  --mute: 130 130 140;
+  --good: 22 150 70;
+  --warn: 190 120 0;
+  --bad: 210 50 50;
+  --line-a: 0.08;
+  color-scheme: light;
+}
+
+/* Acentos: valores para oscuro / claro */
+:root[data-accent='lima'] { --accent: 200 240 74; --onaccent: 12 14 6; }
+:root[data-accent='azul'] { --accent: 92 160 255; --onaccent: 4 10 22; }
+:root[data-accent='naranja'] { --accent: 255 146 72; --onaccent: 24 10 2; }
+:root[data-accent='violeta'] { --accent: 170 148 255; --onaccent: 14 8 30; }
+:root[data-accent='rosa'] { --accent: 255 102 146; --onaccent: 26 4 12; }
+:root[data-theme='claro'][data-accent='lima'] { --accent: 84 124 0; --onaccent: 255 255 255; }
+:root[data-theme='claro'][data-accent='azul'] { --accent: 30 108 226; --onaccent: 255 255 255; }
+:root[data-theme='claro'][data-accent='naranja'] { --accent: 206 88 10; --onaccent: 255 255 255; }
+:root[data-theme='claro'][data-accent='violeta'] { --accent: 104 72 222; --onaccent: 255 255 255; }
+:root[data-theme='claro'][data-accent='rosa'] { --accent: 206 40 92; --onaccent: 255 255 255; }
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  @apply bg-bg text-ink font-sans antialiased;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: none;
+  font-feature-settings: 'cv11', 'ss01';
+}
+
+input,
+textarea,
+select,
+button {
+  font: inherit;
+  color: inherit;
+}
+
+/* Evita el zoom de iOS al enfocar campos (font-size ≥ 16px) */
+input,
+textarea,
+select {
+  font-size: max(16px, 1em);
+}
+
+@layer components {
+  .card {
+    @apply bg-surface rounded-2xl;
+    box-shadow: inset 0 0 0 1px rgb(var(--line) / var(--line-a));
+  }
+  .hairline {
+    border-color: rgb(var(--line) / var(--line-a));
+  }
+  .divide-hair > * + * {
+    border-top: 1px solid rgb(var(--line) / var(--line-a));
+  }
+  .tnum {
+    font-variant-numeric: tabular-nums;
+  }
+  .eyebrow {
+    @apply text-[11px] font-semibold uppercase tracking-[0.08em] text-mute;
+  }
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl font-semibold select-none transition-[transform,background-color,opacity] duration-150 active:scale-[0.97] disabled:opacity-40 disabled:active:scale-100;
+  }
+  .btn-primary {
+    @apply btn bg-accent text-onaccent h-14 px-6 text-[15px];
+  }
+  .btn-secondary {
+    @apply btn bg-raised text-ink h-12 px-4 text-[15px];
+  }
+  .btn-ghost {
+    @apply btn text-sub h-10 px-3 text-sm;
+  }
+  .btn-icon {
+    @apply btn h-11 w-11 rounded-full text-sub active:bg-raised;
+  }
+  .field {
+    @apply w-full rounded-xl bg-raised px-4 h-12 text-ink placeholder:text-mute outline-none focus:ring-2 focus:ring-accent/60;
+  }
+  .chip {
+    @apply inline-flex items-center h-7 px-2.5 rounded-full text-xs font-medium bg-raised text-sub;
+  }
+  .seg {
+    @apply flex p-1 rounded-xl bg-raised;
+  }
+  .seg > button {
+    @apply flex-1 h-9 rounded-lg text-[13px] font-medium text-sub transition-colors;
+  }
+  .seg > button[aria-pressed='true'] {
+    @apply bg-surface text-ink;
+    box-shadow: 0 1px 2px rgb(0 0 0 / 0.25), inset 0 0 0 1px rgb(var(--line) / var(--line-a));
+  }
+}
+
+.safe-top {
+  padding-top: env(safe-area-inset-top);
+}
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes sheet {
+  from { transform: translateY(100%); }
+  to { transform: none; }
+}
+@keyframes fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes pop {
+  0% { transform: scale(0.6); opacity: 0; }
+  60% { transform: scale(1.08); opacity: 1; }
+  100% { transform: scale(1); }
+}
+.anim-rise { animation: rise 0.32s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+.anim-sheet { animation: sheet 0.34s cubic-bezier(0.2, 0.9, 0.25, 1) both; }
+.anim-fade { animation: fade 0.2s ease both; }
+.anim-pop { animation: pop 0.36s cubic-bezier(0.2, 0.9, 0.25, 1.2) both; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
+
+/* Inputs numéricos sin flechas */
+input[type='number']::-webkit-outer-spin-button,
+input[type='number']::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+input[type='number'] { -moz-appearance: textfield; }
+
+::-webkit-scrollbar { width: 0; height: 0; }
