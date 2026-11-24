@@ -110,9 +110,10 @@ export async function finishSession(id: string) {
   });
 }
 
-export async function togglePause(id: string) {
+export async function setPaused(id: string, paused: boolean) {
   await mutate(id, (s) => {
     const now = Date.now();
+    if (paused === !!s.pausedAt) return;
     if (s.pausedAt) {
       s.pausedMs += now - s.pausedAt;
       if (s.restEndsAt) s.restEndsAt += now - s.pausedAt;

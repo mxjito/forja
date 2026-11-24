@@ -6,7 +6,7 @@ import {
 import { db } from '../db/db';
 import type { Exercise, Session, SessionExercise } from '../db/types';
 import { useActive, useExercises, useNow, useSessions, useSettings, useUnit } from '../lib/hooks';
-import { completeSet, finishSession, mutate, togglePause, buildEntry } from '../lib/workout';
+import { completeSet, finishSession, mutate, setPaused, buildEntry } from '../lib/workout';
 import { fmtSets, lastPerformance, sessionDuration, sessionSetCount, sessionVolume, suggestion, PR_LABEL, bestsFor, e1rm, MUSCLE_LABEL } from '../lib/calc';
 import { formatDuration, formatMinutes, relativeDay } from '../lib/dates';
 import { fromUnit, roundDisplay, showVolume, toUnit } from '../lib/units';
@@ -57,7 +57,25 @@ function ActiveWorkout({ session, sessions, onFinished }: { session: Session; se
 
   const totalSets = session.exercises.reduce((a, e) => a + e.sets.length, 0);
   const doneCount = session.exercises.reduce((a, e) => a + e.sets.filter((s) => s.done).length, 0);
-  const paused = !!session.pausedAt;
+  // Respuesta inmediata en pantalla; la base de datos se actualiza justo después.
+  const [optimistic, setOptimistic] = useState<boolean | null>(null);
+  const savedPaused = !!session.pausedAt;
+  const paused = optimistic ?? savedPaused;
+  useEffect(() => {
+    if (optimistic != null && optimistic === savedPaused) setOptimistic(null);
+  }, [optimistic, savedPaused]);
+  const togglePause = async () => {
+    const want = !paused;
+    setOptimistic(want);
+    if (settings.vibrate) buzz(20);
+    try {
+      await setPaused(session.id, want);
+    } catch (e) {
+      setOptimistic(null);
+      toast(`No se pudo ${want ? 'pausar' : 'reanudar'}: ${(e as Error)?.message ?? e}`);
+    }
+  };
+  const shownNow = paused && !savedPaused ? Date.now() : now;
 
   const finish = async () => {
     const pending = session.exercises.reduce((a, e) => a + e.sets.filter((s) => !s.done).length, 0);
@@ -116,10 +134,15 @@ function ActiveWorkout({ session, sessions, onFinished }: { session: Session; se
           </button>
           <div className="min-w-0 flex-1 text-center">
             <div className="truncate text-[15px] font-semibold leading-tight">{session.name}</div>
-            <div className={`text-[13px] tnum ${paused ? 'text-warn' : 'text-sub'}`}>{paused ? 'En pausa · ' : ''}{formatDuration(sessionDuration(session, now))}</div>
+            <div className={`text-[13px] tnum ${paused ? 'text-warn' : 'text-sub'}`}>{paused ? 'En pausa · ' : ''}{formatDuration(sessionDuration(session, shownNow))}</div>
           </div>
-          <button className="btn-icon" aria-label={paused ? 'Reanudar' : 'Pausar'} onClick={() => togglePause(session.id)}>
-            {paused ? <Play size={20} /> : <Pause size={20} />}
+          <button
+            className={`btn mr-1 h-9 rounded-full px-3 text-sm ${paused ? 'bg-warn text-black' : 'bg-raised text-ink'}`}
+            aria-label={paused ? 'Reanudar' : 'Pausar'}
+            onClick={togglePause}
+          >
+            {paused ? <Play size={15} fill="currentColor" /> : <Pause size={15} fill="currentColor" />}
+            {paused ? 'Seguir' : 'Pausa'}
           </button>
           <button className="btn h-9 rounded-full bg-accent px-4 text-sm text-onaccent" onClick={finish}>
             Terminar
@@ -131,13 +154,17 @@ function ActiveWorkout({ session, sessions, onFinished }: { session: Session; se
       </header>
 
       {paused && (
-        <button onClick={() => togglePause(session.id)} className="mx-4 mt-4 flex w-[calc(100%-2rem)] items-center gap-3 rounded-2xl bg-warn/12 p-4 text-left" style={{ background: 'rgb(var(--warn) / 0.12)' }}>
-          <Pause size={20} className="text-warn" />
-          <span className="flex-1 text-sm">
-            <b className="block">Entrenamiento en pausa</b>
-            <span className="text-sub">El tiempo no corre. Toca para reanudar.</span>
-          </span>
-        </button>
+        <div className="fixed inset-0 z-[45] flex flex-col items-center justify-center px-8 text-center anim-fade" style={{ background: 'rgb(var(--bg) / 0.94)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' }}>
+          <div className="eyebrow text-warn">Entrenamiento en pausa</div>
+          <div className="mt-3 text-[56px] font-semibold leading-none tracking-tight tnum">{formatDuration(sessionDuration(session, shownNow))}</div>
+          <p className="mt-3 max-w-xs text-sm text-sub">El tiempo y el descanso están detenidos. Todo lo que apuntaste está guardado.</p>
+          <button className="btn-primary mt-8 w-full max-w-xs" onClick={togglePause}>
+            <Play size={18} fill="currentColor" /> Reanudar
+          </button>
+          <button className="btn-ghost mt-2" onClick={() => nav('/')}>
+            Salir (la sesión se queda guardada)
+          </button>
+        </div>
       )}
 
       <div className="px-4 pt-4 text-[13px] text-sub tnum flex justify-between">

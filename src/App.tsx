@@ -102,6 +102,23 @@ function UpdatePrompt() {
   );
 }
 
+/** Muestra en pantalla cualquier error inesperado en vez de fallar en silencio. */
+function ErrorReporter() {
+  const toast = useToast();
+  useEffect(() => {
+    const show = (msg: unknown) => toast(`Error: ${String(msg).slice(0, 140)}`);
+    const onErr = (e: ErrorEvent) => show(e.message);
+    const onRej = (e: PromiseRejectionEvent) => show((e.reason as Error)?.message ?? e.reason);
+    window.addEventListener('error', onErr);
+    window.addEventListener('unhandledrejection', onRej);
+    return () => {
+      window.removeEventListener('error', onErr);
+      window.removeEventListener('unhandledrejection', onRej);
+    };
+  }, [toast]);
+  return null;
+}
+
 function Shell() {
   const settings = useSettings();
   useApplyTheme(settings);
@@ -134,6 +151,7 @@ function Shell() {
       {!inWorkout && <ActiveBar />}
       {!inWorkout && <TabBar />}
       <UpdatePrompt />
+      <ErrorReporter />
     </>
   );
 }

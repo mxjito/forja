@@ -51,9 +51,17 @@ await step('saltar descanso y completar sets', async () => {
   await shot('04-ejercicio-hecho');
 });
 await step('pausa', async () => {
-  await page.getByLabel('Pausar').click();
+  await page.getByLabel('Pausar').tap();
   await page.getByText('Entrenamiento en pausa').waitFor();
-  await page.getByLabel('Reanudar').click();
+  const t1 = await page.locator('.text-\\[56px\\]').textContent();
+  await page.waitForTimeout(2200);
+  const t2 = await page.locator('.text-\\[56px\\]').textContent();
+  if (t1 !== t2) throw new Error(`el tiempo sigue corriendo en pausa: ${t1} → ${t2}`);
+  await page.reload();
+  await page.getByText('Entrenamiento en pausa').waitFor();
+  await shot('04b-pausa');
+  await page.getByRole('button', { name: 'Reanudar' }).last().tap();
+  await page.getByLabel('Pausar').waitFor();
 });
 await step('terminar y resumen', async () => {
   await page.locator('header').getByRole('button', { name: 'Terminar', exact: true }).click();
